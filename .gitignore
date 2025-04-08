@@ -1,0 +1,18 @@
+# ingorrar el ntorno virtual
+horarios_env/
+
+#ignorar el archivos de caché de Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+#ignorar archivos de configuración de VS Code
+.vscode/
+
+#ignorar compilados
+build/
+dist/
+*.egg-info/
+
+
