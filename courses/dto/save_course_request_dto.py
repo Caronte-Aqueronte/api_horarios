@@ -10,3 +10,4 @@ class SaveCourseRequestDTO(BaseModel):
     semester: int = Field(..., gt=0)
     section: str = Field(..., max_length=10, min_length=1)
     type: CourseTypeEnum = Field(...)
+    professor_id: int = Field(..., gt=0)

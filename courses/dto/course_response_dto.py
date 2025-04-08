@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from courses.enums.course_type_enum import CourseTypeEnum
+from courses.models.course import Course
 
 
 class CourseResponseDTO(BaseModel):
@@ -10,6 +11,20 @@ class CourseResponseDTO(BaseModel):
     semester: int
     section: str
     type: CourseTypeEnum
+    professor_name: str = None
 
     class Config:
-        from_attributes = True
+        from_attributes = True  # permite construir el dto directamente desde objetos orm
+
+    @staticmethod
+    def from_course(course: Course) -> "CourseResponseDTO":
+        return CourseResponseDTO(
+            id=course.id,
+            name=course.name,
+            code=course.code,
+            career=course.career,
+            semester=course.semester,
+            section=course.section,
+            type=course.type,
+            professor_name=course.professor.name
+        )

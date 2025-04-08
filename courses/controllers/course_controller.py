@@ -23,8 +23,8 @@ def get_courses(db: db_dependency) -> List[CourseResponseDTO]:
     # obtenemos todos los cursos usando el servicio
     courses: List[Course] = service.get_all_courses()
 
-    # convertimos los modelos a DTO de respuesta y los retornamos
-    return [CourseResponseDTO.model_validate(course) for course in courses]
+    # convertimos los modelos a dto de respuesta y los retornamos
+    return [CourseResponseDTO.from_course(course) for course in courses]
 
 
 @router.post("/", response_model=CourseResponseDTO, status_code=status.HTTP_201_CREATED)
@@ -32,14 +32,14 @@ def create_course(new_course: SaveCourseRequestDTO, db: db_dependency) -> Course
     # creamos una instancia del servicio con la sesión de la bd
     service = CourseService(db)
 
-    # convertimos el DTO a modelo de base de datos
-    course_model = Course(**new_course.model_dump())
+    # convertimos el dto a modelo de base de datos
+    course = Course(**new_course.model_dump())
 
     # guardamos el curso usando el servicio
-    saved_course: Course = service.create_course(course_model)
+    response: Course = service.create_course(course)
 
-    # convertimos el modelo guardado a DTO de respuesta y lo retornamos
-    return CourseResponseDTO.model_validate(saved_course)
+    # convertimos el modelo guardado a dto de respuesta y lo retornamos
+    return CourseResponseDTO.from_course(response)
 
 
 @router.patch("/{course_id}", response_model=CourseResponseDTO)
@@ -47,21 +47,23 @@ def edit_course(course_id: int, updated_course: SaveCourseRequestDTO, db: db_dep
     # creamos una instancia del servicio con la sesión de la bd
     service = CourseService(db)
 
-    # convertimos el DTO a modelo de base de datos
-    course_model = Course(**updated_course.model_dump())
+    # convertimos el dto a modelo de base de datos
+    course = Course(**updated_course.model_dump())
 
     # editamos el curso usando el servicio
-    saved_course: Course = service.update_course(course_id, course_model)
+    response: Course = service.update_course(course_id, course)
 
-    # convertimos el modelo editado a DTO de respuesta y lo retornamos
-    return CourseResponseDTO.model_validate(saved_course)
+    # convertimos el modelo editado a dto de respuesta y lo retornamos
+    return CourseResponseDTO.from_course(response)
 
 
 @router.get("/{course_id}", response_model=CourseResponseDTO)
 def get_course(course_id: int, db: db_dependency) -> CourseResponseDTO:
     # creamos una instancia del servicio con la sesión de la bd
     service = CourseService(db)
+
     # traemos el curso por su id
-    saved_course: Course = service.get_course_by_id(course_id)
-    # convertimos el modelo  a DTO de respuesta y lo retornamos
-    return CourseResponseDTO.model_validate(saved_course)
+    course: Course = service.get_course_by_id(course_id)
+
+    # convertimos el modelo  a dto de respuesta y lo retornamos
+    return CourseResponseDTO.from_course(course)
