@@ -21,10 +21,13 @@ class Schedule:
         bonuses: int = 0
         # guarda si una clase ya esta asignada en un mismo periodo
         classroom_occupancy: Dict[Tuple[int, str], bool] = {}
+
         # guarda si ya fue asignado un profesor en el mismo periodo
         professor_occupancy: Dict[Tuple[int, str], bool] = {}
+
         # guarda si ya existe una asignacion de un curso de mismo semestre y carrera en un mismo periodo
         semester_occupancy: Dict[Tuple[int, int, str], bool] = {}
+
         # guarda todos periodos asignados a cursos obligatorios
         # de la misma carr
         courses_per_semester: Dict[Tuple[int, str], List] = {}
