@@ -8,10 +8,10 @@ from classrooms.models.classroom import Classroom
 class ClassroomService:
 
     def __init__(self, db: Session):
-        self.__db = db
+        self.__db: Session = db
 
     def get_all_classrooms(self) -> List[Classroom]:
-        classrooms = self.__db.query(Classroom).all()
+        classrooms: List[Classroom] = self.__db.query(Classroom).all()
         return classrooms
 
     def create_classroom(self, classroom: Classroom) -> Classroom:
@@ -47,7 +47,7 @@ class ClassroomService:
 
     def get_classroom_by_id(self, classroom_id: int) -> Classroom:
         # mandamos a bscar el salon filtrado por id
-        classroom = self.__db.query(Classroom).filter(
+        classroom: Classroom = self.__db.query(Classroom).filter(
             Classroom.id == classroom_id).first()
         # si el salon no esta presente entonces lanzamos una excepcion
         if not classroom:
@@ -57,14 +57,16 @@ class ClassroomService:
 
     def exists_classroom_by_name(self, classroom_name: str) -> bool:
         # se filtran los salones por el nombre
-        classroom = self.__db.query(Classroom).filter(
+        classroom: Classroom = self.__db.query(Classroom).filter(
             Classroom.name == classroom_name).first()
+
         # esto devuleve un boleano, si existe el salon con el nombre devuelve true, si no false
         return classroom is not None
 
     def exists_classroom_by_name_and_id_is_not(self, classroom_name: str, classroom_id: int) -> bool:
-        professor = self.__db.query(Classroom).filter(
+        classroom: Classroom = self.__db.query(Classroom).filter(
             Classroom.name == classroom_name,
             Classroom.id != classroom_id).first()
+
         # esto devuleve un boleano, si existe el salon con el nombre devuelve true, si no false
-        return professor is not None
+        return classroom is not None

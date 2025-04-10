@@ -10,12 +10,11 @@ from professors.services.professor_service import ProfessorService
 class CourseService:
     # el constructor siempre rcibira la sesion de la bd
     def __init__(self, db: Session):
-        self.__db = db
-        self.__professor_service = ProfessorService(db)
+        self.__db: Session = db
+        self.__professor_service: ProfessorService = ProfessorService(db)
 
     def get_all_courses(self) -> List[Course]:
-        courses = self.__db.query(Course).all()
-        return courses
+        return self.__db.query(Course).all()
 
     def create_course(self, course: Course) -> Course:
         # mandamos a traer el profesor para verificar que existe, sino entonces el metodo lanzara una excepcion
@@ -66,21 +65,26 @@ class CourseService:
         return existing_course
 
     def get_course_by_id(self, course_id: int) -> Course:
-        course = self.__db.query(Course).filter(Course.id == course_id).first()
+        course: Course = self.__db.query(Course).filter(
+            Course.id == course_id).first()
         if not course:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Curso no encontrado")
         return course
 
     def exist_course_by_code(self, course_code: str) -> bool:
-        course = self.__db.query(Course).filter(
+        course: Course = self.__db.query(Course).filter(
             Course.code == course_code).first()
         # esto devuleve un boleano, si existe el curso devuelve true, si no false
         return course is not None
 
     def exist_course_by_code_and_id_is_not(self, course_code: str, course_id: int) -> bool:
-        course = self.__db.query(Course).filter(
+        course: Course = self.__db.query(Course).filter(
             Course.code == course_code,
             Course.id != course_id).first()
         # esto devuleve un boleano, si existe el curso devuelve true, si no false
         return course is not None
+
+    def get_courses_by_ids(self, ids: List[int]) -> List[Course]:
+        # cargamos los cursos desde la base de datos usando la listam
+        return self.__db.query(Course).filter(Course.id.in_(ids)).all()

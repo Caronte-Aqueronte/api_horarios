@@ -1,10 +1,10 @@
-from typing import List
+from typing import Dict, List
 import random
 from classrooms.models.classroom import Classroom
 from courses.models.course import Course
 from professors.models.professor import Professor
 from schedules.models.gen import Gen
-from schedules.services.schedule import Schedule
+from schedules.ga.schedule import Schedule
 
 
 class GeneticAlgorithm:
@@ -14,13 +14,16 @@ class GeneticAlgorithm:
                  max_generations: int,
                  courses: List[Course],
                  classrooms: List[Classroom],
-                 professors: List[Professor]):
+                 professors: List[Professor],
+                 manual_course_classrooms_assignments: Dict[Course, Classroom]):
 
-        self.__population_size = population_size
-        self.__max_generations = max_generations
+        self.__population_size: int = population_size
+        self.__max_generations: int = max_generations
         self.__courses: List[Course] = courses
         self.__classrooms: List[Classroom] = classrooms
         self.__professors: List[Professor] = professors
+        self.__manual_course_classrooms_assignments: Dict[Course,
+                                                          Classroom] = manual_course_classrooms_assignments
 
         self.__crossover_probability: float = 0.95
         self.__mutation_probability: float = 0.1
@@ -38,8 +41,13 @@ class GeneticAlgorithm:
 
             # por cada uno de los cursos disponibles vamos construyedno los diferentes genes aleatorios
             for course in self.__courses:
-                # elegimos una clase random
-                classroom: Classroom = self.__select_random_classroom()
+
+                # si ya existe un salor para este curso entonces lo obtenemos
+                if course in self.__manual_course_classrooms_assignments:
+                    classroom: Classroom = self.__manual_course_classrooms_assignments[course]
+                else:
+                    # sino elegimos una clase random
+                    classroom: Classroom = self.__select_random_classroom()
 
                 # generamos los periodos aleatorios con random
                 period: int = self.__generate_random_period()
@@ -100,8 +108,10 @@ class GeneticAlgorithm:
         # generamos un numero randon entre 1 y 0
         random_number: float = random.random()
 
+        genes_count = len(parent1.get_genes())
+
         # si este es menor a la probabilidad entonces significa se hace cruce
-        if random_number < self.__crossover_probability:
+        if genes_count >= 2 and random_number <= self.__crossover_probability:
 
             # seleccionar un punto de cruce aleatoriom, 0 y len evitados para que no sea copia
             crossover_point: int = random.randint(
@@ -141,8 +151,10 @@ class GeneticAlgorithm:
                 mutation_type = random.randint(1, 3)
 
                 if mutation_type == 1:
-                    new_classroom: Classroom = self.__select_random_classroom()
-                    gen.set_classroom(new_classroom)
+                    # solo mutamos el salon si el curso del gen no lo tiene asignado a la fuerza manualmente
+                    if gen.get_course() not in self.__manual_course_classrooms_assignments:
+                        new_classroom: Classroom = self.__select_random_classroom()
+                        gen.set_classroom(new_classroom)
 
                 elif mutation_type == 2:
                     new_period: int = self.__generate_random_period()

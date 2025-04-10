@@ -1,10 +1,7 @@
 
 from typing import List
 
-from classrooms.models.classroom import Classroom
 from courses.enums.course_type_enum import CourseTypeEnum
-from courses.models.course import Course
-from professors.models.professor import Professor
 from schedules.models.gen import Gen
 from typing import Dict, Tuple
 
@@ -92,7 +89,7 @@ class Schedule:
                 if periods[i] - periods[i - 1] == 1:
                     bonuses = bonuses + 1
 
-        return conflicts + bonuses
+        return bonuses - conflicts
 
     def reaload_fitness(self):
         self.__fitness = self.__fitness_function()

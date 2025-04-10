@@ -8,10 +8,10 @@ from professors.models.professor import Professor
 class ProfessorService:
 
     def __init__(self, db: Session):
-        self.__db = db
+        self.__db: Session = db
 
     def get_all_professors(self) -> List[Professor]:
-        professors = self.__db.query(Professor).all()
+        professors: List[Professor] = self.__db.query(Professor).all()
         return professors
 
     def create_professor(self, professor: Professor) -> Professor:
@@ -50,7 +50,7 @@ class ProfessorService:
 
     def get_professor_by_id(self, professor_id: int) -> Professor:
         # mandamos a bscar el profesor filtrado por id
-        professor = self.__db.query(Professor).filter(
+        professor: Professor = self.__db.query(Professor).filter(
             Professor.id == professor_id).first()
         # si el professor no esta presente entonces lanzamos una excepcion
         if not professor:
@@ -60,14 +60,18 @@ class ProfessorService:
 
     def exists_professor_by_dpi(self, professor_dpi: str) -> bool:
         # se filtran los profesores por el dpi
-        professor = self.__db.query(Professor).filter(
+        professor: Professor = self.__db.query(Professor).filter(
             Professor.dpi == professor_dpi).first()
         # esto devuleve un boleano, si existe el profesor con el dpi devuelve true, si no false
         return professor is not None
 
     def exists_professor_by_dpi_and_id_is_not(self, professor_dpi: str, professor_id: int) -> bool:
-        professor = self.__db.query(Professor).filter(
+        professor: Professor = self.__db.query(Professor).filter(
             Professor.dpi == professor_dpi,
             Professor.id != professor_id).first()
         # esto devuleve un boleano, si existe el profesor con el dpi devuelve true, si no false
         return professor is not None
+
+    def get_professors_by_ids(self, ids: List[int]) -> List[Professor]:
+        # cargamos los cursos desde la base de datos usando la listam
+        return self.__db.query(Professor).filter(Professor.id.in_(ids)).all()
