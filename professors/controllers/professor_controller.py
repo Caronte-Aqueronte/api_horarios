@@ -16,7 +16,7 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 
 @router.get("/", response_model=List[ProfessorResponseDTO])
-def get_courses(db: db_dependency) -> List[ProfessorResponseDTO]:
+def get_professors(db: db_dependency) -> List[ProfessorResponseDTO]:
     # creamos una instancia del servicio con la sesión de la bd
     service = ProfessorService(db)
 
@@ -28,7 +28,7 @@ def get_courses(db: db_dependency) -> List[ProfessorResponseDTO]:
 
 
 @router.post("/", response_model=ProfessorResponseDTO, status_code=status.HTTP_201_CREATED)
-def create_course(new_professor: SaveProfessorRequestDTO, db: db_dependency) -> ProfessorResponseDTO:
+def create_professor(new_professor: SaveProfessorRequestDTO, db: db_dependency) -> ProfessorResponseDTO:
     # creamos una instancia del servicio con la sesión de la bd
     service = ProfessorService(db)
 
@@ -43,7 +43,7 @@ def create_course(new_professor: SaveProfessorRequestDTO, db: db_dependency) -> 
 
 
 @router.patch("/{professor_id}", response_model=ProfessorResponseDTO)
-def edit_course(professor_id: int, updated_professor: SaveProfessorRequestDTO, db: db_dependency) -> ProfessorResponseDTO:
+def edit_professor(professor_id: int, updated_professor: SaveProfessorRequestDTO, db: db_dependency) -> ProfessorResponseDTO:
     # creamos una instancia del servicio con la sesión de la bd
     service = ProfessorService(db)
 
@@ -59,7 +59,7 @@ def edit_course(professor_id: int, updated_professor: SaveProfessorRequestDTO, d
 
 
 @router.get("/{professor_id}", response_model=ProfessorResponseDTO)
-def get_course(professor_id: int, db: db_dependency) -> ProfessorResponseDTO:
+def get_professor(professor_id: int, db: db_dependency) -> ProfessorResponseDTO:
     # creamos una instancia del servicio con la sesión de la bd
     service = ProfessorService(db)
 

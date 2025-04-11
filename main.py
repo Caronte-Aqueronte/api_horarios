@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-
+from fastapi.middleware.cors import CORSMiddleware
 from courses.controllers.course_controller import router as courses_router
 from professors.controllers.professor_controller import router as professors_router
 from classrooms.controllers.classroom_controller import router as classrooms_router
@@ -10,6 +10,13 @@ from courses.models.course import Course
 from db.database import Base, engine
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # se permiten todos los origenes
+    allow_methods=["*"],  # se permiten todos los metodos
+    allow_headers=["*"],  # se permiten todos los headers
+)
 
 # incluimos todos los endpoints presentes en el router de cursos
 app.include_router(courses_router)
