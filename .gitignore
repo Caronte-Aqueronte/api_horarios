@@ -1,5 +1,5 @@
 # ingorrar el ntorno virtual
-horarios_env/
+env/
 
 #ignorar el archivos de caché de Python
 __pycache__/
