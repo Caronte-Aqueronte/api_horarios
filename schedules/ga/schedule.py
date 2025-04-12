@@ -61,7 +61,10 @@ class Schedule:
             # debemos validar si el curso esta fuera del horario del docente
             if (gen.get_start_time() < gen.get_professor().entry_time
                or gen.get_start_time() > gen.get_professor().entry_time):
+                conflicts = conflicts + 1
 
+            # debemos penalizar que el curso del gen no este presente en los cursos que el docente puede
+            if (gen.get_course not in gen.get_professor().courses):
                 conflicts = conflicts + 1
 
             # si el tipo de curso es obligatorio, existe y es tre entonces un curso del mismo semestre y carrera

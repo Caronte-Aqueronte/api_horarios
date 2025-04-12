@@ -7,6 +7,7 @@ from schedules.controller.schedule_controller import router as schedule_controll
 from classrooms.models.classroom import Classroom
 from professors.models.professor import Professor
 from courses.models.course import Course
+from shared.models.professor_course import ProfessorCourse
 from db.database import Base, engine
 
 app = FastAPI()

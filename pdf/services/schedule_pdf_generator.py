@@ -13,9 +13,10 @@ from schedules.utils.period_util import PeriodUtil
 
 
 class SchedulePdfGenerator:
-    def __init__(self, schedule: Schedule):
+    def __init__(self, schedule: Schedule, disponible_classrooms: List[Classroom]):
         self.__schedule: Schedule = schedule
         self.__period_util: PeriodUtil = PeriodUtil()
+        self.__disponible_classrooms: List[Classroom] = disponible_classrooms
 
     def generate_schedule_pdf(self) -> bytes:
         buffer: io.BytesIO = io.BytesIO()
@@ -27,10 +28,7 @@ class SchedulePdfGenerator:
 
         headers_row: List[str] = ["Hora/Salon"]
 
-        # mandmoas a traer todos los classrooms
-        classrooms: List[Classroom] = self.__get_classrooms()
-
-        for classroom in classrooms:
+        for classroom in self.__disponible_classrooms:
             headers_row.append(f"{classroom.name}")
 
         data: List[Any] = []
@@ -53,16 +51,16 @@ class SchedulePdfGenerator:
             row: List[str] = [str_period_time]
 
             # cada ahora vamos recorriendo cada una de las clases que estan presentes en los genes
-            for classroom in classrooms:
+            for classroom in self.__disponible_classrooms:
 
                 key = (period, classroom.id)
 
                 # si la key existe en el mapa eso signidfica que este salon en este periodo tiene una asignacion
                 if key in schedule_map:
                     gen: Gen = schedule_map[key]
-                    course_name = gen.get_course().name
-                    prof_name = gen.get_professor().name
-                    cell_text = f"Curso: {course_name}\n Docente: {prof_name}"
+                    course = gen.get_course()
+                    professor = gen.get_professor()
+                    cell_text = f"Curso-Codigo\n{course.name}\n{course.code}\nDocente-DPI\n{professor.name}\n{professor.dpi}"
                 else:
                     cell_text = "-"
 
@@ -114,10 +112,3 @@ class SchedulePdfGenerator:
             # con la llave agregamos el salon
             schedule_map[key] = gen
         return schedule_map
-
-    def __get_classrooms(self) -> List[Classroom]:
-        classrooms: List[Classroom] = []
-        for gen in self.__schedule.get_genes():
-            classrooms.append(gen.get_classroom())
-
-        return classrooms

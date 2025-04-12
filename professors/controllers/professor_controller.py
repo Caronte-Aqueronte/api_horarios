@@ -33,10 +33,12 @@ def create_professor(new_professor: SaveProfessorRequestDTO, db: db_dependency) 
     service = ProfessorService(db)
 
     # convertimos el dto a modelo de base de datos
-    professor_model = Professor(**new_professor.model_dump())
+    professor_model = Professor(
+        **new_professor.model_dump(exclude={"courses_ids"}))
 
     # guardamos el curso usando el servicio
-    saved_professor: Professor = service.create_professor(professor_model)
+    saved_professor: Professor = service.create_professor(
+        professor_model, new_professor.courses_ids)
 
     # convertimos el modelo guardado a dto de respuesta y lo retornamos
     return ProfessorResponseDTO.model_validate(saved_professor)
@@ -48,11 +50,12 @@ def edit_professor(professor_id: int, updated_professor: SaveProfessorRequestDTO
     service = ProfessorService(db)
 
     # convertimos el dto a modelo de base de datos
-    professor = Professor(**updated_professor.model_dump())
+    professor = Professor(
+        **updated_professor.model_dump(exclude={"courses_ids"}))
 
     # editamos el curso usando el servicio
     updated_professor: Professor = service.update_professor(
-        professor_id, professor)
+        professor_id, professor, updated_professor.courses_ids)
 
     # convertimos el modelo editado a dto de respuesta y lo retornamos
     return ProfessorResponseDTO.model_validate(updated_professor)

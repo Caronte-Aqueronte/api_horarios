@@ -1,6 +1,6 @@
 from datetime import time
+from typing import List
 from pydantic import BaseModel, Field
-from courses.enums.course_type_enum import CourseTypeEnum
 
 
 class SaveProfessorRequestDTO(BaseModel):
@@ -9,3 +9,4 @@ class SaveProfessorRequestDTO(BaseModel):
     dpi: str = Field(..., max_length=13, min_length=13)
     entry_time: time = Field(...)
     exit_time: time = Field(...)
+    courses_ids: List[int] = Field(...)

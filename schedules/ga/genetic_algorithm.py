@@ -53,8 +53,7 @@ class GeneticAlgorithm:
                 period: int = self.__generate_random_period()
 
                 # elegimos un profesor random para un curso
-                professor: Professor = self.__select_random_professor_for_course(
-                    course)
+                professor: Professor = random.choice(self.__professors)
 
                 # toca crear el gen con lo ya elejido
                 gen: Gen = Gen(classroom, course, professor, period)
@@ -65,25 +64,6 @@ class GeneticAlgorithm:
             initial_population.append(schedule)
 
         return initial_population
-
-    def __select_random_professor_for_course(self, course: Course) -> Professor:
-
-        # mandamos a traer los profesores validos para este curso
-        elegible_professors: List[Professor] = self.__filter_elegible_professors_for_coruse(
-            course)
-
-        # podmeos elejir aleatorioamente un docente random con random choie que escoge aleatoriamente un elemento de listac
-        return random.choice(elegible_professors)
-
-    def __filter_elegible_professors_for_coruse(self, course: Course) -> List[Professor]:
-        # debemos guardar los profesores seleccionados
-        eligible_professors: List[Professor] = []
-
-        # iteramos en todos los profesores disponibles
-        for professor in self.__professors:
-            if course in professor.courses:
-                eligible_professors.append(professor)
-        return eligible_professors
 
     def __selection(self, population: List[Schedule]) -> Schedule:
         # seleccionamos aleatoriamente un subconjunto de individuos de la población
@@ -161,8 +141,7 @@ class GeneticAlgorithm:
                     gen.set_period(new_period)
 
                 elif mutation_type == 3:
-                    new_professor: Professor = self.__select_random_professor_for_course(
-                        gen.get_course())
+                    new_professor: Professor = random.choice(self.__professors)
                     gen.set_professor(new_professor)
         # mandamos a recalcular el profit una vez haya mutado
         schedule.reaload_fitness()

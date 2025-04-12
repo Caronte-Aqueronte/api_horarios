@@ -18,8 +18,8 @@ class Course(Base):
     section = Column(String(10), nullable=False)
     type = Column(Enum(CourseTypeEnum), nullable=False)
 
-    professor_id = Column(Integer, ForeignKey("professor.id"), nullable=False)
-    professor = relationship("Professor", back_populates="courses")
+    professors = relationship(
+        "Professor", secondary="professor_course", back_populates="courses")
 
     def __eq__(self, other) -> bool:
         # solo si es intancia de la clase

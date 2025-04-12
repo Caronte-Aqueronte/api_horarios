@@ -1,4 +1,5 @@
 from typing import Dict, List, Tuple
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from classrooms.models.classroom import Classroom
@@ -27,6 +28,10 @@ class ScheduleService:
                           ):
         # los todos los salones seran evaluados
         classrooms: List[Classroom] = self.__classroom_service.get_all_classrooms()
+
+        if (len(classrooms) == 0):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="No hay salones ingresados en el sistema.")
 
         courses: List[Course] = self.__course_service.get_courses_by_ids(
             courses_availables_ids)
@@ -67,6 +72,6 @@ class ScheduleService:
 
         # ahora solo demos mandar a imprimir ese horario
         schedule_pdf_generator: SchedulePdfGenerator = SchedulePdfGenerator(
-            schedule)
+            schedule, classrooms)
 
         return schedule_pdf_generator.generate_schedule_pdf()

@@ -2,6 +2,7 @@ from typing import List
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from courses.services.course_service import CourseService
 from professors.models.professor import Professor
 
 
@@ -9,16 +10,23 @@ class ProfessorService:
 
     def __init__(self, db: Session):
         self.__db: Session = db
+        self.__course_service: CourseService = CourseService(db)
 
     def get_all_professors(self) -> List[Professor]:
         professors: List[Professor] = self.__db.query(Professor).all()
         return professors
 
-    def create_professor(self, professor: Professor) -> Professor:
+    def create_professor(self, professor: Professor, courses_ids: List[int]) -> Professor:
         # verificamos si ya existe un docente con el mismo dpi, esto puede lanzar una excepcion si ya existe
         if (self.exists_professor_by_dpi(professor.dpi)):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail="Ya existe un docente con el dpi especificado.")
+        # mandamos a treaer todos los cursos de las selecciones
+        exisiting_courses = self.__course_service.get_courses_by_ids(
+            courses_ids)
+
+        # le asignamos los cursos que se indicaron
+        professor.courses = exisiting_courses
         # con add creamos el docente en la bd
         self.__db.add(professor)
         # confimarmos el cambio en la bd
@@ -27,9 +35,13 @@ class ProfessorService:
         self.__db.refresh(professor)
         return professor
 
-    def update_professor(self, professor_id: int, updated_data: Professor) -> Professor:
+    def update_professor(self, professor_id: int, updated_data: Professor, courses_ids: List[int]) -> Professor:
         # mandamos a traer el el profesor que se desa actualizar, esto puede lanzar una excepcion si no existe
         existing_professor: Professor = self.get_professor_by_id(professor_id)
+
+        # mandamos a treaer todos los cursos de las selecciones
+        exisiting_courses = self.__course_service.get_courses_by_ids(
+            courses_ids)
 
         # verificamos si ya existe otro docente con el mismo dpi, debemos verificar que el id no sea el mismo que el del docente que estamos actualizando
         if (self.exists_professor_by_dpi_and_id_is_not(updated_data.dpi, professor_id)):
@@ -41,6 +53,7 @@ class ProfessorService:
         existing_professor.dpi = updated_data.dpi
         existing_professor.entry_time = updated_data.entry_time
         existing_professor.exit_time = updated_data.exit_time
+        existing_professor.courses = exisiting_courses
         # realizamos el commit en la bd
         self.__db.commit()
         # recargamos el modelo para tener la version mas actualizada
