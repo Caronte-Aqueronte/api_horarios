@@ -1,15 +1,19 @@
 
 from typing import List
 
+from classrooms.models.classroom import Classroom
 from courses.enums.course_type_enum import CourseTypeEnum
+from courses.models.course import Course
 from schedules.models.gen import Gen
 from typing import Dict, Tuple
 
 
 class Schedule:
 
-    def __init__(self, genes: List[Gen]):
+    def __init__(self, genes: List[Gen],  manual_course_classrooms_assignments: Dict[Course, Classroom]):
         self.__genes: List[Gen] = genes
+        self.__manual_course_classrooms_assignments: Dict[Course,
+                                                          Classroom] = manual_course_classrooms_assignments
 
         # va a guardar el valor de la aptitud dd cada uno de los genes
         self.__fitness = self.__fitness_function()
@@ -60,12 +64,19 @@ class Schedule:
 
             # debemos validar si el curso esta fuera del horario del docente
             if (gen.get_start_time() < gen.get_professor().entry_time
-               or gen.get_start_time() > gen.get_professor().entry_time):
+               or gen.get_start_time() >= gen.get_professor().exit_time
+               or gen.get_end_time() > gen.get_professor().exit_time):
                 conflicts = conflicts + 1
 
             # debemos penalizar que el curso del gen no este presente en los cursos que el docente puede
-            if (gen.get_course not in gen.get_professor().courses):
+            if (gen.get_course() not in gen.get_professor().courses):
                 conflicts = conflicts + 1
+
+            # si el curso del gen esta presente en las asignaciones manuales a un classroom
+            # pero el classroom del gen no es el que deberia ser entonces es un conflicto
+            if (gen.get_course() in self.__manual_course_classrooms_assignments):
+                if (gen.get_classroom() != self.__manual_course_classrooms_assignments.get(gen.get_course())):
+                    conflicts = conflicts + 10
 
             # si el tipo de curso es obligatorio, existe y es tre entonces un curso del mismo semestre y carrera
             # ya fue asignado en el mismo periodo

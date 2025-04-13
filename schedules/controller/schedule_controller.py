@@ -31,7 +31,8 @@ def generate_schedule(generate_schedule_request_dto: GenerateScheduleRequestDTO,
         generate_schedule_request_dto.courses_availables_ids,
         generate_schedule_request_dto.professors_availables_ids,
         generate_schedule_request_dto.manual_course_classrooms_assignments,
-        generate_schedule_request_dto.target_fitness
+        generate_schedule_request_dto.target_fitness,
+        generate_schedule_request_dto.selection_type
     )
 
     return dto

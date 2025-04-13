@@ -16,7 +16,8 @@ class GeneticAlgorithm:
                  classrooms: List[Classroom],
                  professors: List[Professor],
                  manual_course_classrooms_assignments: Dict[Course, Classroom],
-                 target_fitness: int
+                 target_fitness: int,
+                 selection_type: int
                  ):
 
         self.__population_size: int = population_size
@@ -30,6 +31,7 @@ class GeneticAlgorithm:
         self.__crossover_probability: float = 0.95
         self.__mutation_probability: float = 0.1
         self.__target_fitness = target_fitness
+        self.__selection_type = selection_type
 
     def __generate_initial_population(self) -> List[Schedule]:
         # debemos guardar todos los horarios generados
@@ -61,12 +63,16 @@ class GeneticAlgorithm:
                 genes.append(gen)
 
             # creamos el nuevo horario y lo agregamos a la pblacion inicial
-            schedule: Schedule = Schedule(genes)
+            schedule: Schedule = Schedule(
+                genes, self.__manual_course_classrooms_assignments)
             initial_population.append(schedule)
 
         return initial_population
 
     def __selection(self, population: List[Schedule]) -> Schedule:
+        return self.__tournament(population) if self.__selection_type == 1 else self.__roulette(population)
+
+    def __roulette(self, population: List[Schedule]) -> Schedule:
 
         total_fitness: int = sum([schedule.get_fitness()
                                  for schedule in population])
@@ -98,6 +104,13 @@ class GeneticAlgorithm:
         # si llego hasta aqui entonces no se pudo seleccionar nada en la ruleta y devolvemos uno random
         return random.choice(population)
 
+    def __tournament(self, population: List[Schedule]) -> Schedule:
+        # generamos el numero que indicara la muestra a seleccionar
+        random_number = random.randint(1, len(population))
+        # escogemos aleatoriamente la cantidad de objetos que dicto el
+        sample: List[Schedule] = random.sample(population, random_number)
+        return self.__get_best_schedule_of_list(sample)
+
     def __crossover(self, parent1: Schedule, parent2: Schedule) -> Schedule:
         # generamos un numero randon entre 1 y 0
         random_number: float = random.random()
@@ -119,14 +132,12 @@ class GeneticAlgorithm:
 
             # unimos ambas partes para formar los genes del hijo
             child_genes: List[Gen] = left_genes + right_genes
-
-            return Schedule(child_genes)
-
-        selected_genes = random.choice(
-            [parent1.get_genes(), parent2.get_genes()])
+        else:
+            child_genes: List[Gen] = random.choice(
+                [parent1.get_genes(), parent2.get_genes()])
 
         # choise devulve un set entonces sebemos convetirlo a lista
-        return Schedule(list(selected_genes))
+        return Schedule(list(child_genes), self.__manual_course_classrooms_assignments)
 
     def __mutate(self, schedule: Schedule):
 
@@ -211,7 +222,7 @@ class GeneticAlgorithm:
 
         return best_schedule
 
-    def __get_best_schedule_of_list(self, schedules) -> Schedule:
+    def __get_best_schedule_of_list(self, schedules: List[Schedule]) -> Schedule:
 
         # mandamos a obtener el maximo de la lista segun su aptitud
         return max(

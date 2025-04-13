@@ -12,3 +12,9 @@ class Classroom(Base):
     __tablename__ = "classroom"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False, unique=True)
+
+    def __eq__(self, other) -> bool:
+        # solo si es intancia de la clase
+        if not isinstance(other, Classroom):
+            return False
+        return self.id == other.id

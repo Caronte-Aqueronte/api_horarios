@@ -26,8 +26,8 @@ class ScheduleService:
     def generate_schedule(self, population_size: int, max_generations: int, courses_availables_ids: List[int],
                           professors_availables_ids: List[int],
                           manual_course_classrooms_assignments: Dict[int, int],
-                          target_fitness: int
-
+                          target_fitness: int,
+                          selection_type: int
                           ) -> ScheduleDTO:
         # los todos los salones seran evaluados
         classrooms: List[Classroom] = self.__classroom_service.get_all_classrooms()
@@ -54,10 +54,10 @@ class ScheduleService:
         manual_assignments_dict: Dict[Course, Classroom] = {}
 
         # vamor recorriendo cada uno de los ids que trae el diccionario de asignaciones manuales
-        for course_id, classroom_id in manual_course_classrooms_assignments.items():
+        for classroom_id, course_id in manual_course_classrooms_assignments.items():
             # usamos cada uno de los ids para buscar los objetos, esto lanza excepcion si es que alguno no se encontro
-            course = self.__course_service.get_course_by_id(course_id)
-            classroom = self.__classroom_service.get_classroom_by_id(
+            course: Course = self.__course_service.get_course_by_id(course_id)
+            classroom: Classroom = self.__classroom_service.get_classroom_by_id(
                 classroom_id)
             manual_assignments_dict[course] = classroom
 
@@ -69,7 +69,7 @@ class ScheduleService:
             classrooms,
             professors,
             manual_assignments_dict,
-            target_fitness)
+            target_fitness, selection_type)
 
         # mandos a crear el horario
         schedule: Schedule = genetic_algorithm.run()
