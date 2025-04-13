@@ -83,8 +83,9 @@ class ScheduleService:
 
         return response
 
-        # # ahora solo demos mandar a imprimir ese horario
-        # schedule_pdf_generator: SchedulePdfGenerator = SchedulePdfGenerator(
-        #     schedule, classrooms)
+    def generate_schedule_pdf(self, schedule: ScheduleDTO) -> bytes:
+        # mandmaos a llamar al generador del pdf y le pasamos el dto, el ya sabe que hacer con eso
+        schedule_pdf_generator: SchedulePdfGenerator = SchedulePdfGenerator(
+            schedule)
 
-        # return schedule_pdf_generator.generate_schedule_pdf()
+        return schedule_pdf_generator.generate_schedule_pdf()

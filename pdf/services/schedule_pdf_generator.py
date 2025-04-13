@@ -1,22 +1,18 @@
-from datetime import time
 import io
-from typing import Any, Dict, Iterator, List, Tuple
+from typing import Any, List
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 
-from classrooms.models.classroom import Classroom
-from schedules.ga.schedule import Schedule
-from schedules.models.gen import Gen
-from schedules.utils.period_util import PeriodUtil
+
+from courses.dto.course_response_dto import CourseResponseDTO
+from schedules.dtos.schedule_dto import ScheduleDTO
 
 
 class SchedulePdfGenerator:
-    def __init__(self, schedule: Schedule, disponible_classrooms: List[Classroom]):
-        self.__schedule: Schedule = schedule
-        self.__period_util: PeriodUtil = PeriodUtil()
-        self.__disponible_classrooms: List[Classroom] = disponible_classrooms
+    def __init__(self, schedule: ScheduleDTO):
+        self.__schedule: ScheduleDTO = schedule
 
     def generate_schedule_pdf(self) -> bytes:
         buffer: io.BytesIO = io.BytesIO()
@@ -24,43 +20,29 @@ class SchedulePdfGenerator:
         # el documento pasara el buffer para que este escriba sobre el
         pdf: SimpleDocTemplate = SimpleDocTemplate(buffer, pagesize=A4)
 
-        schedule_map: Dict[Tuple[int, int], Gen] = self.__get_period_map()
+        headers_row: List[str] = ["Perido/Salon"]
 
-        headers_row: List[str] = ["Hora/Salon"]
-
-        for classroom in self.__disponible_classrooms:
+        for classroom in self.__schedule.classrooms:
             headers_row.append(f"{classroom.name}")
 
         data: List[Any] = []
         data.append(headers_row)
 
-        # la lista de los periodos siempre es del 1 al 9. range es exclusive en el bound final
-        all_periods: Iterator[int] = range(1, 10)
-
         # vamos recorriendo cada uno de los periodos
-        for period in all_periods:
-
-            # convertimos el periodo en tiempo
-            period_start_time, period_end_time = self.__period_util.get_start_and_end_time_for_period(
-                period)
-
-            # formateamos la hora a string
-            str_period_time: str = f"{period_start_time.strftime('%H:%M')} - {period_end_time.strftime('%H:%M')}"
+        for period in self.__schedule.rows:
 
             # aqui vamos a guardar todas los textos de las celdas
-            row: List[str] = [str_period_time]
+            row: List[str] = [period.time_range]
 
             # cada ahora vamos recorriendo cada una de las clases que estan presentes en los genes
-            for classroom in self.__disponible_classrooms:
-
-                key = (period, classroom.id)
+            for assignment in period.assignments:
 
                 # si la key existe en el mapa eso signidfica que este salon en este periodo tiene una asignacion
-                if key in schedule_map:
-                    gen: Gen = schedule_map[key]
-                    course = gen.get_course()
-                    professor = gen.get_professor()
-                    cell_text = f"Curso-Codigo\n{course.name}\n{course.code}\nDocente-DPI\n{professor.name}\n{professor.dpi}"
+                if not assignment.is_empty:
+                    course: CourseResponseDTO = assignment.course
+                    professor_name = assignment.professor_name
+                    professor_dpi = assignment.professor_dpi
+                    cell_text = f"Curso-Codigo\n{course.name}\n{course.code}\nDocente-DPI\n{professor_name}\n{professor_dpi}"
                 else:
                     cell_text = "-"
 
@@ -100,15 +82,3 @@ class SchedulePdfGenerator:
         buffer.seek(0)
 
         return buffer.getvalue()
-
-    def __get_period_map(self) -> Dict[Tuple[int, int], Gen]:
-        # este mapa va a guardar todos los genes que pertenecen a un periodo y salon
-        schedule_map: Dict[Tuple[int, int], Gen] = {}
-        # recorremos todos los genes
-        for gen in self.__schedule.get_genes():
-            # la llave sere el numero de periodo jutno con el id del salon
-            key: Tuple[int, int] = (gen.get_period(), gen.get_classroom().id)
-
-            # con la llave agregamos el salon
-            schedule_map[key] = gen
-        return schedule_map
