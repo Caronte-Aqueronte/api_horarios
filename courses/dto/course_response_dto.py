@@ -13,7 +13,8 @@ class CourseResponseDTO(BaseModel):
     type: CourseTypeEnum
 
     class Config:
-        from_attributes = True  # permite construir el dto directamente desde objetos orm
+        from_attributes = True  # permite construir el dto directamente desde objetos
+        use_enum_values = True
 
     @staticmethod
     def from_course(course: Course):

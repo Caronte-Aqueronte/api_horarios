@@ -15,7 +15,9 @@ class GeneticAlgorithm:
                  courses: List[Course],
                  classrooms: List[Classroom],
                  professors: List[Professor],
-                 manual_course_classrooms_assignments: Dict[Course, Classroom]):
+                 manual_course_classrooms_assignments: Dict[Course, Classroom],
+                 target_fitness: int
+                 ):
 
         self.__population_size: int = population_size
         self.__max_generations: int = max_generations
@@ -27,8 +29,7 @@ class GeneticAlgorithm:
 
         self.__crossover_probability: float = 0.95
         self.__mutation_probability: float = 0.1
-        self.__tournament_size: int = 3
-        self.__target_fitness = 0
+        self.__target_fitness = target_fitness
 
     def __generate_initial_population(self) -> List[Schedule]:
         # debemos guardar todos los horarios generados
@@ -66,23 +67,36 @@ class GeneticAlgorithm:
         return initial_population
 
     def __selection(self, population: List[Schedule]) -> Schedule:
-        # seleccionamos aleatoriamente un subconjunto de individuos de la población
-        # esto lo logramos con sample porque elige una cantidad de elementos X de una lista aleatoriamente
-        tournament_elements: List[Schedule] = random.sample(
-            population, self.__tournament_size)
 
-        # mandamos a traer el horario con mayor aptitud
-        best_schedule: Schedule = self.__get_best_schedule_of_list(
-            tournament_elements)
+        total_fitness: int = sum([schedule.get_fitness()
+                                 for schedule in population])
 
-        # Devolvemos el individuo ganador del torneo
-        return best_schedule
+        # si el fitness total es 0 entonces devovlemos un random para evitar las diviciones por 0
+        if (total_fitness == 0):
+            return random.choice(population)
 
-    def __get_best_schedule_of_list(self, schedules) -> Schedule:
+        # el fitnes relativo es la probabilidad de que sea elegido
+        relatives_fitness: List[float] = [
+            schedule.get_fitness()/total_fitness for schedule in population]
 
-        # mandamos a obtener el maximo de la lista segun su aptitud
-        return max(
-            schedules, key=lambda schedule: schedule.get_fitness())
+        # vamos a calcular las porciones que ocupa cada elemento en la ruleta
+        cumulative_probability: List[float] = []
+        accumulator: float = 0.0
+
+        for relative_fitness in relatives_fitness:
+            accumulator = accumulator + relative_fitness
+            cumulative_probability.append(accumulator)
+
+        # ahora vamos a generar el numero aletorio entre 0 y 1 para girar nuestra ruleta
+        random_number: float = random.random()
+
+        # erecorremos las acumuladas
+        for i in range(len(cumulative_probability)):
+            # si la seleccion de la ruleta es igual o menor a la probabilidad de una porcion entonces es porque esa se selecciono
+            if random_number <= cumulative_probability[i]:
+                return population[i]
+        # si llego hasta aqui entonces no se pudo seleccionar nada en la ruleta y devolvemos uno random
+        return random.choice(population)
 
     def __crossover(self, parent1: Schedule, parent2: Schedule) -> Schedule:
         # generamos un numero randon entre 1 y 0
@@ -196,3 +210,9 @@ class GeneticAlgorithm:
                 best_schedule = probable_best_schedule
 
         return best_schedule
+
+    def __get_best_schedule_of_list(self, schedules) -> Schedule:
+
+        # mandamos a obtener el maximo de la lista segun su aptitud
+        return max(
+            schedules, key=lambda schedule: schedule.get_fitness())

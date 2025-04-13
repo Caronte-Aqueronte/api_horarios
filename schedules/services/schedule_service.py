@@ -9,6 +9,7 @@ from courses.services.course_service import CourseService
 from pdf.services.schedule_pdf_generator import SchedulePdfGenerator
 from professors.models.professor import Professor
 from professors.services.professor_service import ProfessorService
+from schedules.dtos.schedule_dto import ScheduleDTO, ScheduleDTOBuilder
 from schedules.ga.genetic_algorithm import GeneticAlgorithm
 from schedules.ga.schedule import Schedule
 
@@ -23,9 +24,11 @@ class ScheduleService:
         pass
 
     def generate_schedule(self, population_size: int, max_generations: int, courses_availables_ids: List[int],
-                          professors_availables_ids: List[str],
-                          manual_course_classrooms_assignments: List[Tuple[int, int]]
-                          ):
+                          professors_availables_ids: List[int],
+                          manual_course_classrooms_assignments: Dict[int, int],
+                          target_fitness: int
+
+                          ) -> ScheduleDTO:
         # los todos los salones seran evaluados
         classrooms: List[Classroom] = self.__classroom_service.get_all_classrooms()
 
@@ -51,7 +54,7 @@ class ScheduleService:
         manual_assignments_dict: Dict[Course, Classroom] = {}
 
         # vamor recorriendo cada uno de los ids que trae el diccionario de asignaciones manuales
-        for course_id, classroom_id in manual_course_classrooms_assignments:
+        for course_id, classroom_id in manual_course_classrooms_assignments.items():
             # usamos cada uno de los ids para buscar los objetos, esto lanza excepcion si es que alguno no se encontro
             course = self.__course_service.get_course_by_id(course_id)
             classroom = self.__classroom_service.get_classroom_by_id(
@@ -65,13 +68,23 @@ class ScheduleService:
             courses,
             classrooms,
             professors,
-            manual_assignments_dict)
+            manual_assignments_dict,
+            target_fitness)
 
         # mandos a crear el horario
         schedule: Schedule = genetic_algorithm.run()
 
-        # ahora solo demos mandar a imprimir ese horario
-        schedule_pdf_generator: SchedulePdfGenerator = SchedulePdfGenerator(
-            schedule, classrooms)
+        # construimos el dto
+        dto_builder: ScheduleDTOBuilder = ScheduleDTOBuilder(
+            schedule, classrooms
+        )
 
-        return schedule_pdf_generator.generate_schedule_pdf()
+        response: ScheduleDTO = dto_builder.build()
+
+        return response
+
+        # # ahora solo demos mandar a imprimir ese horario
+        # schedule_pdf_generator: SchedulePdfGenerator = SchedulePdfGenerator(
+        #     schedule, classrooms)
+
+        # return schedule_pdf_generator.generate_schedule_pdf()

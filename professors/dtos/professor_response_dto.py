@@ -20,11 +20,11 @@ class ProfessorResponseDTO(BaseModel):
     @staticmethod
     def from_professor(professor: Professor):
         return ProfessorResponseDTO(
-            professor.id,
-            professor.name,
-            professor.dpi,
-            professor.entry_time,
-            professor.exit_time,
-            [CourseResponseDTO.from_course(course)
-             for course in professor.courses]
+            id=professor.id,
+            name=professor.name,
+            dpi=professor.dpi,
+            entry_time=professor.entry_time,
+            exit_time=professor.exit_time,
+            courses=[CourseResponseDTO.from_course(course)
+                     for course in professor.courses]
         )
