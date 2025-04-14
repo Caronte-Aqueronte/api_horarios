@@ -281,39 +281,30 @@ class GeneticAlgorithm:
         final_memory: float = self.__measure_memory()
 
         # debemos mandar a calcular los porcentajes de asignaciones continuas
-        semester_continuity_percentages, global_continuity_percentage = self.__measure_continuity_percentage_per_semester(
+        semester_continuity_percentages = self.__measure_continuity_percentage_per_semester(
             best_schedule)
         return GaDTO(schedule=best_schedule, total_iterations=total_iterations, history_confilcts=history_confilcts,
                      history_fitness=history_fitness, memory_usage=final_memory, total_time=total_time,
                      semester_continuity_percentages=semester_continuity_percentages,
-                     global_continuity_percentage=global_continuity_percentage)
+                     )
 
     def __measure_continuity_percentage_per_semester(
         self, schedule: Schedule
-    ) -> Tuple[Dict[Tuple[int, str], float], float]:
+    ) -> Dict[str, float]:
 
         # lleva la cuenta de cuantos cursos hay para cada semestre y carrera
-        quantity_courses_of_same_semester: Dict[Tuple[int, str], int] = {}
+        quantity_courses_of_same_semester: Dict[str, int] = {}
 
         # para cada semestre y carrera se almacena la lista de periodos asignados
-        courses_continuity: Dict[Tuple[int, str], List[int]] = {}
+        courses_continuity: Dict[str, List[int]] = {}
 
         # dic final con el porcentaje de continuidad de cada semestre y carrera
-        semester_continuity_percentages: Dict[Tuple[int, str], float] = {}
-
-        # total de cursos en el horario actual
-        total_courses: int = len(schedule.get_genes())
-
-        # cursos consecutivos totales detectados
-        total_continuity_courses: int = 0
+        semester_continuity_percentages: Dict[str, float] = {}
 
         # recorremos todos los genes y agrupamos cuantos cursos hay por
         #    admeas de almacenar los periodos en los que aparecieron
         for gen in schedule.get_genes():
-            continuity_key: Tuple[int, str] = (
-                gen.get_course().semester,
-                gen.get_course().career
-            )
+            continuity_key: str = f"Semestre: {gen.get_course().semester} - Carrera:  {gen.get_course().career}"
 
             # aumentamos la cuenta de cursos
             quantity_courses_of_same_semester[continuity_key] = (
@@ -330,13 +321,13 @@ class GeneticAlgorithm:
             # ordenamos los periodos
             periods.sort()
 
-            continuity_courses_of_semester: int = 0
+            # si el curso de mismo semestre y carrera tiene periodos entonces ya hay un continuo
+            continuity_courses_of_semester: int = 1 if len(periods) > 0 else 0
             # recorremos los periodos, iniciando por el segundo elemento y vamos comparando cada uno con el anterior
             for i in range(1, len(periods)):
                 # si la resta del periodo actual menos el anterior es 1 entonces es consecutivo
                 if periods[i] - periods[i - 1] == 1:
-                    continuity_courses_of_semester = continuity_courses_of_semester + 2
-                    total_continuity_courses = total_continuity_courses + 2
+                    continuity_courses_of_semester = continuity_courses_of_semester + 1
              # con la llave obtenemos la cantidad de cursos que existen de la misma carrera y semestre
             num_courses_of_same_semester: int = quantity_courses_of_same_semester[
                 continuity_key]
@@ -350,15 +341,7 @@ class GeneticAlgorithm:
             else:
                 semester_continuity_percentages[continuity_key] = 0.0
 
-        # ahora debemos dividir la cantidad de cursos totales continuos por la cantidad de cursos totales
-        # lo multiplicamos por 100 para que convertirlo en un porcentaje
-        if total_courses > 0:   # evita divisin entre cero
-            global_continuity_percentage: float = (
-                total_continuity_courses / total_courses)*100
-        else:
-            global_continuity_percentage: float = 0.0
-
-        return (semester_continuity_percentages, global_continuity_percentage)
+        return semester_continuity_percentages
 
     def __measure_total_conflicts_of_generation(self, population: List[Schedule]) -> int:
         total_conflicts: int = 0

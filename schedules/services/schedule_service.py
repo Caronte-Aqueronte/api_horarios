@@ -10,7 +10,7 @@ from pdf.services.schedule_pdf_generator import SchedulePdfGenerator
 from professors.models.professor import Professor
 from professors.services.professor_service import ProfessorService
 from schedules.dtos.ga_dto import GaDTO
-from schedules.dtos.schedule_dto import ScheduleDTO, ScheduleDTOBuilder
+from schedules.dtos.schedule_dto import ScheduleDTO, ScheduleDTOBuilder, ScheduleDTOWithReports
 from schedules.ga.genetic_algorithm import GeneticAlgorithm
 from schedules.ga.schedule import Schedule
 
@@ -29,7 +29,7 @@ class ScheduleService:
                           manual_course_classrooms_assignments: Dict[int, int],
                           target_fitness: int,
                           selection_type: int
-                          ) -> ScheduleDTO:
+                          ) -> ScheduleDTOWithReports:
         # los todos los salones seran evaluados
         classrooms: List[Classroom] = self.__classroom_service.get_all_classrooms()
 
@@ -80,10 +80,10 @@ class ScheduleService:
             gaDto.schedule, classrooms, gaDto.total_iterations,
             gaDto.history_confilcts, gaDto.history_fitness,
             gaDto.memory_usage, gaDto.total_time,
-            gaDto.semester_continuity_percentages, gaDto.global_continuity_percentage,
+            gaDto.semester_continuity_percentages,
         )
 
-        response: ScheduleDTO = dto_builder.build()
+        response: ScheduleDTOWithReports = dto_builder.build()
 
         return response
 

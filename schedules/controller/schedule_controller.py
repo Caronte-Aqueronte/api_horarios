@@ -8,7 +8,7 @@ from courses. services.course_service import CourseService
 from courses.dto.save_course_request_dto import SaveCourseRequestDTO
 from db.dependency import get_db
 from schedules.dtos.generate_schedule_request_dto import GenerateScheduleRequestDTO
-from schedules.dtos.schedule_dto import ScheduleDTO
+from schedules.dtos.schedule_dto import ScheduleDTO, ScheduleDTOWithReports
 from schedules.services.schedule_service import ScheduleService
 
 router = APIRouter(
@@ -19,8 +19,8 @@ router = APIRouter(
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-@router.post("/", response_model=ScheduleDTO)
-def generate_schedule(generate_schedule_request_dto: GenerateScheduleRequestDTO, db: db_dependency) -> ScheduleDTO:
+@router.post("/", response_model=ScheduleDTOWithReports)
+def generate_schedule(generate_schedule_request_dto: GenerateScheduleRequestDTO, db: db_dependency) -> ScheduleDTOWithReports:
     print(generate_schedule_request_dto)
     # creamos una instancia del servicio con la sesión de la bd
     service = ScheduleService(db)

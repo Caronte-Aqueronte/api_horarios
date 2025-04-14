@@ -24,13 +24,17 @@ class ScheduleRowDTO(BaseModel):
 
 
 class ScheduleDTO(BaseModel):
+    classrooms: List[ClassroomResponseDTO]
+    rows: List[ScheduleRowDTO]
+
+
+class ScheduleDTOWithReports(BaseModel):
     total_iterations: int
     history_confilcts: Dict[str, int]
     history_fitness: Dict[str, int]
     memory_usage: float
     total_time: float
-    semester_continuity_percentages: Dict[Tuple[int, str], float]
-    global_continuity_percentage: float
+    semester_continuity_percentages: Dict[str, float]
 
     classrooms: List[ClassroomResponseDTO]
     rows: List[ScheduleRowDTO]
@@ -48,7 +52,6 @@ class ScheduleDTOBuilder:
         memory_usage: float,
         total_time: float,
         semester_continuity_percentages: Dict[Tuple[int, str], float],
-        global_continuity_percentage: float
     ):
         self.__schedule: Schedule = schedule
         self.__classrooms: List[Classroom] = classrooms
@@ -59,11 +62,10 @@ class ScheduleDTOBuilder:
         self.__history_fitness: Dict[str, int] = history_fitness
         self.__memory_usage: float = memory_usage
         self.__total_time: float = total_time
-        self.__semester_continuity_percentages: Dict[Tuple[int,
-                                                           str], float] = semester_continuity_percentages
-        self.__global_continuity_percentage: float = global_continuity_percentage
+        self.__semester_continuity_percentages: Dict[str,
+                                                     float] = semester_continuity_percentages
 
-    def build(self) -> ScheduleDTO:
+    def build(self) -> ScheduleDTOWithReports:
         # convertimos los salones a dtos
         classroom_dtos: List[ClassroomResponseDTO] = [ClassroomResponseDTO.from_classroom(
             classroom) for classroom in self.__classrooms]
@@ -113,10 +115,9 @@ class ScheduleDTOBuilder:
             rows.append(row_dto)
 
         # retornamos el dto construido
-        return ScheduleDTO(
+        return ScheduleDTOWithReports(
             classrooms=classroom_dtos,
             rows=rows,
-            global_continuity_percentage=self.__global_continuity_percentage,
             history_confilcts=self.__history_conflicts,
             history_fitness=self.__history_fitness,
             memory_usage=self.__memory_usage,
