@@ -41,8 +41,8 @@ class SchedulePdfGenerator:
                 if not assignment.is_empty:
                     course: CourseResponseDTO = assignment.course
                     professor_name = assignment.professor_name
-                    professor_dpi = assignment.professor_dpi
-                    cell_text = f"Curso-Codigo\n{course.name}\n{course.code}\nDocente-DPI\n{professor_name}\n{professor_dpi}"
+                    professor_personal_id = assignment.professor_personal_id
+                    cell_text = f"Curso-Codigo\n{course.name}\n{course.code}\nDocente-Registro\n{professor_name}\n{professor_personal_id}"
                 else:
                     cell_text = "-"
 

@@ -64,6 +64,14 @@ class CourseService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Curso no encontrado")
         return course
 
+    def get_course_by_code(self, course_code: int) -> Course:
+        course: Course = self.__db.query(Course).filter(
+            Course.code == course_code).first()
+        if not course:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Curso con el codigo {course_code} no encontrado")
+        return course
+
     def exist_course_by_code(self, course_code: str) -> bool:
         course: Course = self.__db.query(Course).filter(
             Course.code == course_code).first()

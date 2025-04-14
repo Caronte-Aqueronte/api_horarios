@@ -10,7 +10,7 @@ class Professor(Base):
     __tablename__ = "professor"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
-    dpi = Column(String(13), nullable=False, unique=True)
+    personal_id = Column(String(100), nullable=False, unique=True)
     entry_time = Column(Time, nullable=False)
     exit_time = Column(Time, nullable=False)
 

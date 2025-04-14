@@ -9,7 +9,7 @@ from professors.models.professor import Professor
 class ProfessorResponseDTO(BaseModel):
     id: int
     name: str
-    dpi: str
+    personal_id: str
     entry_time: time
     exit_time: time
     courses: List[CourseResponseDTO]
@@ -22,7 +22,7 @@ class ProfessorResponseDTO(BaseModel):
         return ProfessorResponseDTO(
             id=professor.id,
             name=professor.name,
-            dpi=professor.dpi,
+            personal_id=professor.personal_id,
             entry_time=professor.entry_time,
             exit_time=professor.exit_time,
             courses=[CourseResponseDTO.from_course(course)

@@ -13,7 +13,7 @@ from schedules.utils.period_util import PeriodUtil
 class AssignmentDTO(BaseModel):
     course: CourseResponseDTO | None
     professor_name: str | None
-    professor_dpi: str | None
+    professor_personal_id: str | None
     is_empty: bool = False
 
 
@@ -95,14 +95,14 @@ class ScheduleDTOBuilder:
                     assignment_dto: AssignmentDTO = AssignmentDTO(
                         course=CourseResponseDTO.from_course(course),
                         professor_name=professor.name,
-                        professor_dpi=professor.dpi,
+                        professor_personal_id=professor.personal_id,
                         is_empty=False
                     )
                 else:
                     assignment_dto: AssignmentDTO = AssignmentDTO(
                         course=None,
                         professor_name=None,
-                        professor_dpi=None,
+                        professor_personal_id=None,
                         is_empty=True
                     )
                 assignments_for_period.append(assignment_dto)
