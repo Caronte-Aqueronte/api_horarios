@@ -34,7 +34,7 @@ class GeneticAlgorithm:
                                                           Classroom] = manual_course_classrooms_assignments
 
         self.__crossover_probability: float = 0.95
-        self.__mutation_probability: float = 0.1
+        self.__mutation_probability: float = 0.01
         self.__target_fitness = target_fitness
         self.__selection_type = selection_type
 
