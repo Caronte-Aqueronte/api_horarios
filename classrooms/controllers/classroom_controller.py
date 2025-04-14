@@ -26,7 +26,7 @@ def get_classrooms(db: db_dependency) -> List[ClassroomResponseDTO]:
     classrooms: List[ClassroomResponseDTO] = service.get_all_classrooms()
 
     # convertimos los modelos a dto de respuesta y los retornamos
-    return [ClassroomResponseDTO.model_validate(classroom) for classroom in classrooms]
+    return [ClassroomResponseDTO.from_classroom(classroom) for classroom in classrooms]
 
 
 @router.post("/", response_model=ClassroomResponseDTO, status_code=status.HTTP_201_CREATED)
@@ -41,7 +41,7 @@ def create_classroom(new_classroom: SaveClassroomRequestDTO, db: db_dependency) 
     saved_classroom: Classroom = service.create_classroom(classroom)
 
     # convertimos el modelo guardado a dto de respuesta y lo retornamos
-    return ClassroomResponseDTO.model_validate(saved_classroom)
+    return ClassroomResponseDTO.from_classroom(saved_classroom)
 
 
 @router.patch("/{classroom_id}", response_model=ClassroomResponseDTO)
@@ -57,7 +57,7 @@ def edit_classroom(classroom_id: int, response: SaveClassroomRequestDTO, db: db_
         classroom_id, classroom)
 
     # convertimos el modelo editado a dto de respuesta y lo retornamos
-    return ClassroomResponseDTO.model_validate(response)
+    return ClassroomResponseDTO.from_classroom(response)
 
 
 @router.get("/{classroom_id}", response_model=ClassroomResponseDTO)
@@ -69,4 +69,4 @@ def get_course(classroom_id: int, db: db_dependency) -> ClassroomResponseDTO:
     response: Classroom = service.get_classroom_by_id(classroom_id)
 
     # convertimos el modelo  a dto de respuesta y lo retornamos
-    return ClassroomResponseDTO.model_validate(response)
+    return ClassroomResponseDTO.from_classroom(response)
