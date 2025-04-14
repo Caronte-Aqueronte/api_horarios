@@ -1,8 +1,13 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import random
+import time
+import tracemalloc
+
+
 from classrooms.models.classroom import Classroom
 from courses.models.course import Course
 from professors.models.professor import Professor
+from schedules.dtos.ga_dto import GaDTO
 from schedules.models.gen import Gen
 from schedules.ga.schedule import Schedule
 
@@ -112,32 +117,56 @@ class GeneticAlgorithm:
         return self.__get_best_schedule_of_list(sample)
 
     def __crossover(self, parent1: Schedule, parent2: Schedule) -> Schedule:
-        # generamos un numero randon entre 1 y 0
-        random_number: float = random.random()
+        # si el numero random es mayor a la probabilidad entonces no se hace cruce
+        # y se elige uno de los padres al azar para copiarlo
+        if random.random() > self.__crossover_probability:
+            chosen_parent = random.choice([parent1, parent2])
+            return Schedule(list(chosen_parent.get_genes()), self.__manual_course_classrooms_assignments)
 
-        genes_count = len(parent1.get_genes())
+        # lista donde se guardaran los genes del hijo
+        child_genes: List[Gen] = []
 
-        # si este es menor a la probabilidad entonces significa se hace cruce
-        if genes_count >= 2 and random_number <= self.__crossover_probability:
+        # se crean diccionarios para acceder rapido a los genes de cada padre por curso
+        parent1_dict: Dict[Course, Gen] = {
+            gen.get_course(): gen for gen in parent1.get_genes()}
+        parent2_dict: Dict[Course, Gen] = {
+            gen.get_course(): gen for gen in parent2.get_genes()}
 
-            # seleccionar un punto de cruce aleatoriom, 0 y len evitados para que no sea copia
-            crossover_point: int = random.randint(
-                1, len(parent1.get_genes()) - 1)
+        # se recorre cada curso para armar el hijo
+        for course in self.__courses:
+            # si el curso esta en padre1 y el random lo decide se usa el gen de padre1
+            if random.random() < 0.5 and course in parent1_dict:
+                base_gen: Gen = parent1_dict[course]
+            # si no, se usa el de padre2 si lo tiene
+            elif course in parent2_dict:
+                base_gen: Gen = parent2_dict[course]
+            else:
+                # si ningun padre tiene el curso se genera uno aleatorio desde cero
+                classroom: Classroom = (
+                    self.__manual_course_classrooms_assignments[course]
+                    if course in self.__manual_course_classrooms_assignments
+                    else self.__select_random_classroom()
+                )
+                professor: Professor = random.choice(self.__professors)
+                period: int = self.__generate_random_period()
+                gen: Gen = Gen(classroom, course, professor, period)
+                child_genes.append(gen)
+                continue  # se salta lo de abajo porque ya se construyo el gen
 
-            # tomamos la parte izquierda de los genes del padre 1
-            left_genes: List[Gen] = parent1.get_genes()[:crossover_point]
+            # si hay un gen base, se clona para no compartir referencias con padres
+            classroom = (
+                self.__manual_course_classrooms_assignments[course]
+                if course in self.__manual_course_classrooms_assignments
+                else base_gen.get_classroom()
+            )
+            professor = base_gen.get_professor()
+            period = base_gen.get_period()
 
-            # tomamos la parte derecha de los genes del padre 2
-            right_genes: List[Gen] = parent2.get_genes()[crossover_point:]
+            gen = Gen(classroom, course, professor, period)
+            child_genes.append(gen)
 
-            # unimos ambas partes para formar los genes del hijo
-            child_genes: List[Gen] = left_genes + right_genes
-        else:
-            child_genes: List[Gen] = random.choice(
-                [parent1.get_genes(), parent2.get_genes()])
-
-        # choise devulve un set entonces sebemos convetirlo a lista
-        return Schedule(list(child_genes), self.__manual_course_classrooms_assignments)
+        # se devuelve el nuevo horario construido a partir de los genes del hijo
+        return Schedule(child_genes, self.__manual_course_classrooms_assignments)
 
     def __mutate(self, schedule: Schedule):
 
@@ -179,16 +208,33 @@ class GeneticAlgorithm:
         # podmeos elejir aleatorioamente una clase  choice que escoge aleatoriamente un elemento de lista
         return random.choice(self.__classrooms)
 
-    def run(self) -> Schedule:
+    def run(self) -> GaDTO:
+
+        history_confilcts: Dict[str, int] = {}
+        history_fitness: Dict[str, int] = {}
+        # guarda el numero de iteraciones totales para encontrar la solucion optima
+        total_iterations: int = 0
+        # guardamos una marca de tiempo y memoria antes de iniciar el algoritmo
+        start: float = time.time()
+        tracemalloc.start()  # comienza a medir la memoria usuada
 
         # hay que generar la poblacion inicial
         population: List[Schedule] = self.__generate_initial_population()
 
+        # mandamos a calcular los conflictos totales de la generacion inicial y guardamos en el dict
+        confilcts_population: int = self.__measure_total_conflicts_of_generation(
+            population)
+        history_confilcts["Población Inicial"] = confilcts_population
+
         # de la generacion que se caba de crear debemos saber cual es el mejor
         best_schedule: Schedule = self.__get_best_schedule_of_list(population)
 
+        # agregamos el fitness de la poblacion inicial
+        history_fitness["Población Inicial"] = best_schedule.get_fitness()
+
         # debemos crear las generaciones que que el usuario quiere crear
-        for _ in range(self.__max_generations):
+        for i in range(self.__max_generations):
+            total_iterations = i + 1
             new_population: List[Schedule] = []
 
             for _ in range(self.__population_size):
@@ -205,22 +251,128 @@ class GeneticAlgorithm:
 
                 new_population.append(son)
 
+            # mandamos a calcular los conflictos totales de la generacion inicial y guardamos en el dict
+            confilcts_population: int = self.__measure_total_conflicts_of_generation(
+                population)
+            history_confilcts[f"Generación {total_iterations}"] = confilcts_population
+
             # remplazamos la vieja poblacion por la nueva
             population = new_population
 
             # mandamos a traer el horario mas apto
             probable_best_schedule: Schedule = self.__get_best_schedule_of_list(
                 population)
+            # guardamos la fitness del mejor de la generacion
+            history_fitness[f"Generación {total_iterations}"] = probable_best_schedule.get_fitness(
+            )
 
             # si alcanzamos el fitness objetivo e ideal entonces nos detenemos aqui
             if (probable_best_schedule.get_fitness() >= self.__target_fitness):
-                return probable_best_schedule
+                best_schedule = probable_best_schedule
+                break
 
             # si el horario de la nueva geneeracion es mejor que el de la anterior entonces lo sustituimos
             if (probable_best_schedule.get_fitness() > best_schedule.get_fitness()):
                 best_schedule = probable_best_schedule
 
-        return best_schedule
+        # tomamos el tiempo final
+        total_time: float = self.__measure_time(start)
+        # tomamos el la ocupacion de memoria del algoritmo
+        final_memory: float = self.__measure_memory()
+
+        # debemos mandar a calcular los porcentajes de asignaciones continuas
+        semester_continuity_percentages, global_continuity_percentage = self.__measure_continuity_percentage_per_semester(
+            best_schedule)
+        return GaDTO(schedule=best_schedule, total_iterations=total_iterations, history_confilcts=history_confilcts,
+                     history_fitness=history_fitness, memory_usage=final_memory, total_time=total_time,
+                     semester_continuity_percentages=semester_continuity_percentages,
+                     global_continuity_percentage=global_continuity_percentage)
+
+    def __measure_continuity_percentage_per_semester(
+        self, schedule: Schedule
+    ) -> Tuple[Dict[Tuple[int, str], float], float]:
+
+        # lleva la cuenta de cuantos cursos hay para cada semestre y carrera
+        quantity_courses_of_same_semester: Dict[Tuple[int, str], int] = {}
+
+        # para cada semestre y carrera se almacena la lista de periodos asignados
+        courses_continuity: Dict[Tuple[int, str], List[int]] = {}
+
+        # dic final con el porcentaje de continuidad de cada semestre y carrera
+        semester_continuity_percentages: Dict[Tuple[int, str], float] = {}
+
+        # total de cursos en el horario actual
+        total_courses: int = len(schedule.get_genes())
+
+        # cursos consecutivos totales detectados
+        total_continuity_courses: int = 0
+
+        # recorremos todos los genes y agrupamos cuantos cursos hay por
+        #    admeas de almacenar los periodos en los que aparecieron
+        for gen in schedule.get_genes():
+            continuity_key: Tuple[int, str] = (
+                gen.get_course().semester,
+                gen.get_course().career
+            )
+
+            # aumentamos la cuenta de cursos
+            quantity_courses_of_same_semester[continuity_key] = (
+                quantity_courses_of_same_semester.setdefault(
+                    continuity_key, 0) + 1
+            )
+
+            # registramos el periodo para ese semestre y carrera
+            courses_continuity.setdefault(
+                continuity_key, []).append(gen.get_period())
+
+        # calculamos la continuidad
+        for continuity_key, periods in courses_continuity.items():
+            # ordenamos los periodos
+            periods.sort()
+
+            continuity_courses_of_semester: int = 0
+            # recorremos los periodos, iniciando por el segundo elemento y vamos comparando cada uno con el anterior
+            for i in range(1, len(periods)):
+                # si la resta del periodo actual menos el anterior es 1 entonces es consecutivo
+                if periods[i] - periods[i - 1] == 1:
+                    continuity_courses_of_semester = continuity_courses_of_semester + 2
+                    total_continuity_courses = total_continuity_courses + 2
+             # con la llave obtenemos la cantidad de cursos que existen de la misma carrera y semestre
+            num_courses_of_same_semester: int = quantity_courses_of_same_semester[
+                continuity_key]
+
+           # ahora debemos dividir la cantidad de cursos continuos por la cantidad de cursos que existen en el semestre
+           # lo multiplicamos por 100 para que convertirlo en un porcentaje
+            if num_courses_of_same_semester > 0:   # evita divisin entre cero
+                semester_continuity_percentages[continuity_key] = (
+                    continuity_courses_of_semester / num_courses_of_same_semester
+                ) * 100
+            else:
+                semester_continuity_percentages[continuity_key] = 0.0
+
+        # ahora debemos dividir la cantidad de cursos totales continuos por la cantidad de cursos totales
+        # lo multiplicamos por 100 para que convertirlo en un porcentaje
+        if total_courses > 0:   # evita divisin entre cero
+            global_continuity_percentage: float = (
+                total_continuity_courses / total_courses)*100
+        else:
+            global_continuity_percentage: float = 0.0
+
+        return (semester_continuity_percentages, global_continuity_percentage)
+
+    def __measure_total_conflicts_of_generation(self, population: List[Schedule]) -> int:
+        total_conflicts: int = 0
+        for schedule in population:
+            total_conflicts = total_conflicts + schedule.get_conflicts()
+        return total_conflicts
+
+    def __measure_memory(self) -> float:
+        _, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        return peak / 1024  # tremalloc mide en bytes asi que lo pasamos a kilobytes
+
+    def __measure_time(self, initial_time: float) -> float:
+        return time.time() - initial_time
 
     def __get_best_schedule_of_list(self, schedules: List[Schedule]) -> Schedule:
 

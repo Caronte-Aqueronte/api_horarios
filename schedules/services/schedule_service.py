@@ -9,6 +9,7 @@ from courses.services.course_service import CourseService
 from pdf.services.schedule_pdf_generator import SchedulePdfGenerator
 from professors.models.professor import Professor
 from professors.services.professor_service import ProfessorService
+from schedules.dtos.ga_dto import GaDTO
 from schedules.dtos.schedule_dto import ScheduleDTO, ScheduleDTOBuilder
 from schedules.ga.genetic_algorithm import GeneticAlgorithm
 from schedules.ga.schedule import Schedule
@@ -72,11 +73,14 @@ class ScheduleService:
             target_fitness, selection_type)
 
         # mandos a crear el horario
-        schedule: Schedule = genetic_algorithm.run()
+        gaDto: GaDTO = genetic_algorithm.run()
 
         # construimos el dto
         dto_builder: ScheduleDTOBuilder = ScheduleDTOBuilder(
-            schedule, classrooms
+            gaDto.schedule, classrooms, gaDto.total_iterations,
+            gaDto.history_confilcts, gaDto.history_fitness,
+            gaDto.memory_usage, gaDto.total_time,
+            gaDto.semester_continuity_percentages, gaDto.global_continuity_percentage,
         )
 
         response: ScheduleDTO = dto_builder.build()

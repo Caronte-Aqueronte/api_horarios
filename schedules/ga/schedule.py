@@ -15,8 +15,12 @@ class Schedule:
         self.__manual_course_classrooms_assignments: Dict[Course,
                                                           Classroom] = manual_course_classrooms_assignments
 
+        # va a guardar los confictos generados en la funcion fitness, cada que se ejecute el fitness este
+        # valor va a setearse y no a acumularse, representando asi
+        self.__conficts: int = 0
+
         # va a guardar el valor de la aptitud dd cada uno de los genes
-        self.__fitness = self.__fitness_function()
+        self.__fitness: int = self.__fitness_function()
 
     def __fitness_function(self) -> int:
         # medira el numero de conflictos que tienen un conjutno de genes
@@ -104,8 +108,8 @@ class Schedule:
             for i in range(1, len(periods)):
                 # Si dos cursos están asignados al mismo período, se considera una bonificación
                 if periods[i] - periods[i - 1] == 1:
-                    bonuses = bonuses + 1
-
+                    bonuses = bonuses + 3
+        self.__conficts = conflicts
         return bonuses - conflicts
 
     def reaload_fitness(self):
@@ -113,6 +117,9 @@ class Schedule:
 
     def get_fitness(self) -> int:
         return self.__fitness
+
+    def get_conflicts(self) -> int:
+        return self.__conficts
 
     def get_genes(self) -> List[Gen]:
         return self.__genes
